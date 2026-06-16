@@ -51,7 +51,6 @@ export const createTask = async (req: AuthRequest, res: Response) => {
       notifications.push({
         userId: task.assignedToUserId,
         message: `You have been assigned to a new task: "${task.title}"`,
-        isRead: false,
         type: 'INFO'
       });
     }

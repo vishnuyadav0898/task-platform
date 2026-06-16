@@ -12,7 +12,7 @@ export const addComment = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Comment content is required' });
     }
 
-    const task = await Task.findByPk(taskId);
+    const task = await Task.findByPk(Number(taskId));
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
