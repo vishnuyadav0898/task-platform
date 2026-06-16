@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: collaborative-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-collaborative_platform}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: collaborative-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+
+  backend-api:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: collaborative-backend
+    command: npm run dev
+    environment:
+      - DB_HOST=postgres-db
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=${DB_NAME:-collaborative_platform}
+      - REDIS_HOST=redis-cache
+      - REDIS_PORT=6379
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET:-supersecret_access}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-supersecret_refresh}
+      - PORT=4000
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres-db
+      - redis-cache
+    restart: unless-stopped
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend-app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: collaborative-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:4000/api
+    depends_on:
+      - backend-api
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  pgdata:
+  redisdata:
