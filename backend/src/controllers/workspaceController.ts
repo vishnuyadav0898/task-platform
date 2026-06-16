@@ -27,16 +27,27 @@ export const createWorkspace = async (req: AuthRequest, res: Response) => {
 
 export const getWorkspaces = async (req: AuthRequest, res: Response) => {
   try {
-    const workspaces = await Workspace.findAll({
+    const { page = 1, limit = 50 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+
+    const workspaces = await Workspace.findAndCountAll({
       include: [{
         model: User,
-        where: { id: req.user!.id },
-        attributes: [], // don't return full user object
-        through: { where: { status: 'ACCEPTED' } } // Only show accepted workspaces
+        as: 'Users',
+        through: { attributes: [] },
+        where: { id: req.user!.id }
       }],
+      limit: Number(limit),
+      offset,
+      order: [['createdAt', 'DESC']]
     });
     
-    res.json(workspaces);
+    res.json({
+      data: workspaces.rows,
+      total: workspaces.count,
+      page: Number(page),
+      totalPages: Math.ceil(workspaces.count / Number(limit))
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });
@@ -49,8 +60,22 @@ export const getProjects = async (req: AuthRequest, res: Response) => {
     const workspace = await Workspace.findOne({ where: { slug: workspaceSlug } });
     if (!workspace) return res.status(404).json({ error: 'Workspace not found' });
     
-    const projects = await Project.findAll({ where: { workspaceId: workspace.id } });
-    res.json(projects);
+    const { page = 1, limit = 50 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+    
+    const projects = await Project.findAndCountAll({
+      where: { workspaceId: workspace.id },
+      limit: Number(limit),
+      offset,
+      order: [['createdAt', 'DESC']]
+    });
+    
+    res.json({
+      data: projects.rows,
+      total: projects.count,
+      page: Number(page),
+      totalPages: Math.ceil(projects.count / Number(limit))
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });

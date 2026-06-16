@@ -7,6 +7,7 @@ import Project from './Project';
 import Task from './Task';
 import Notification from './Notification';
 import Activity from './Activity';
+import Comment from './Comment';
 
 // User <-> Session
 User.hasMany(Session, { foreignKey: 'userId' });
@@ -46,6 +47,14 @@ Task.belongsTo(User, { foreignKey: 'assignedToUserId', as: 'assignee' });
 Task.hasMany(Task, { foreignKey: 'parentId', as: 'subtasks', onDelete: 'CASCADE' });
 Task.belongsTo(Task, { foreignKey: 'parentId', as: 'parentTask' });
 
+// Task <-> Comment
+Task.hasMany(Comment, { foreignKey: 'taskId', as: 'comments', onDelete: 'CASCADE' });
+Comment.belongsTo(Task, { foreignKey: 'taskId' });
+
+// User <-> Comment
+User.hasMany(Comment, { foreignKey: 'userId', as: 'comments', onDelete: 'CASCADE' });
+Comment.belongsTo(User, { foreignKey: 'userId', as: 'author' });
+
 // User <-> Activity
 User.hasMany(Activity, { foreignKey: 'userId', onDelete: 'CASCADE' });
 Activity.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -64,4 +73,5 @@ export {
   Task,
   Notification,
   Activity,
+  Comment,
 };

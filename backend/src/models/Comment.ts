@@ -1,33 +1,33 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/database';
+import Task from './Task';
 import User from './User';
 
-class Workspace extends Model {
+class Comment extends Model {
   public id!: number;
-  public name!: string;
-  public slug!: string;
-  public ownerId!: number;
+  public taskId!: number;
+  public userId!: number;
+  public content!: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
 
-Workspace.init(
+Comment.init(
   {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    name: {
-      type: DataTypes.STRING,
+    taskId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: Task,
+        key: 'id',
+      },
     },
-    slug: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
-    ownerId: {
+    userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -35,16 +35,20 @@ Workspace.init(
         key: 'id',
       },
     },
+    content: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
   },
   {
     sequelize,
-    modelName: 'Workspace',
-    tableName: 'workspaces',
+    modelName: 'Comment',
+    tableName: 'comments',
     indexes: [
-      { fields: ['slug'] },
-      { fields: ['ownerId'] },
+      { fields: ['taskId'] },
+      { fields: ['userId'] },
     ],
   }
 );
 
-export default Workspace;
+export default Comment;

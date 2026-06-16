@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import { createTask, getProjectTasks, getTaskTree, updateTask, deleteTask } from '../controllers/taskController';
 import { authenticateJWT } from '../middlewares/auth';
+import commentRoutes from './commentRoutes';
 
 const router = Router();
 
 router.use(authenticateJWT);
+
+router.use('/:taskId/comments', commentRoutes);
 
 /**
  * @swagger

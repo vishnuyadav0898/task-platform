@@ -47,7 +47,16 @@ export const createTask = async (req: AuthRequest, res: Response) => {
           type: 'INFO',
           message: `New ${parentId ? 'subtask' : 'task'} "${task.title}" was created.`,
         }));
-      if (notifications.length > 0) await Notification.bulkCreate(notifications as any);
+      if (task.assignedToUserId && task.assignedToUserId !== req.user!.id) {
+      notifications.push({
+        userId: task.assignedToUserId,
+        message: `You have been assigned to a new task: "${task.title}"`,
+        isRead: false,
+        type: 'INFO'
+      });
+    }
+
+    if (notifications.length > 0) await Notification.bulkCreate(notifications as any);
     }
     
     res.status(201).json(task);
@@ -74,7 +83,7 @@ export const getProjectTasks = async (req: AuthRequest, res: Response) => {
       where: {
         projectId: project.id,
       },
-      limit: 500,
+      limit: Number(limit),
       offset,
       order: [['createdAt', 'DESC']]
     });
@@ -130,6 +139,7 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
     if (!task) return res.status(404).json({ error: 'Task not found' });
     
     const oldStatus = task.status;
+    const oldAssignee = task.assignedToUserId;
     await task.update(updates);
     
     if (updates.status && updates.status !== oldStatus) {
@@ -162,6 +172,16 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
         entityId: task.id,
         metadata: { title: task.title }
       });
+    }
+    
+    // Notification for assignment change
+    if (updates.assignedToUserId !== undefined && updates.assignedToUserId !== oldAssignee) {
+      await Notification.create({
+        userId: updates.assignedToUserId,
+        message: `You have been assigned to task "${task.title}"`,
+        isRead: false,
+        type: 'INFO'
+      } as any);
     }
     
     res.json(task);

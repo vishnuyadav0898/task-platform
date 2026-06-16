@@ -101,6 +101,7 @@ Task.init(
       { fields: ['parentId'] },
       { fields: ['dueDate'] }, // Important for scheduler cron job
       { fields: ['assignedToUserId'] },
+      { fields: ['status'] },
     ],
   }
 );
