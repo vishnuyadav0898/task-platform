@@ -1,6 +1,6 @@
 import { Queue, Worker } from 'bullmq';
 import { Op } from 'sequelize';
-import { Task, Notification } from '../models';
+import { Task, Notification, Project } from '../models';
 import IORedis from 'ioredis';
 import dotenv from 'dotenv';
 
@@ -28,7 +28,7 @@ export const notificationWorker = new Worker(
       userId,
       message,
       isRead: false,
-      type: type === 'WARNING' ? 'WARNING' : 'INFO',
+      type: 'INFO',
     });
     
     if (type === 'REMINDER') {
@@ -65,7 +65,7 @@ export const schedulerWorker = new Worker(
         },
         reminderSent: false,
         status: {
-          [Op.notIn]: ['DONE', 'ARCHIVED']
+          [Op.notIn]: ['DONE']
         }
       }
     });
@@ -93,14 +93,14 @@ export const schedulerWorker = new Worker(
         },
         overdueNotified: false,
         status: {
-          [Op.notIn]: ['DONE', 'ARCHIVED']
+          [Op.notIn]: ['DONE']
         }
       },
-      include: ['project'] // we need project to find workspaceId
+      include: [{ model: Project, as: 'Project' }] // we need project to find workspaceId
     });
 
     for (const task of overdueTasks) {
-      const project = (task as any).project;
+      const project = (task as any).Project;
       if (project) {
         // Find all workspace members
         const { WorkspaceMember } = require('../models');
