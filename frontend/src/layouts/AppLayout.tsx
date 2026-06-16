@@ -52,6 +52,10 @@ export default function AppLayout() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspaces'] });
       navigate('/');
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.error || 'Failed to delete workspace');
+      queryClient.invalidateQueries({ queryKey: ['workspaces'] });
     }
   });
 
@@ -60,6 +64,10 @@ export default function AppLayout() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', workspaceSlug] });
       navigate(`/${workspaceSlug}`);
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.error || 'Failed to delete project');
+      queryClient.invalidateQueries({ queryKey: ['projects', workspaceSlug] });
     }
   });
 

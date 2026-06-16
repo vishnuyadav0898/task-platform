@@ -30,7 +30,7 @@ export default function ProjectBoard() {
     queryKey: ['tasks', projectSlug],
     queryFn: async () => {
       const { data } = await api.get(`/tasks/workspace/${workspaceSlug}/project/${projectSlug}`);
-      return data.rows;
+      return data.data;
     },
     enabled: !!projectSlug
   });
@@ -68,21 +68,27 @@ export default function ProjectBoard() {
 
   const updateTaskStatus = useMutation({
     mutationFn: async ({ taskId, status }: { taskId: number, status: string }) => {
-      await api.put(`/tasks/${taskId}`, { status });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', projectSlug] });
-      queryClient.invalidateQueries({ queryKey: ['activities', projectSlug] });
-    }
-  });
-
-  const deleteTask = useMutation({
-    mutationFn: async (taskId: number) => {
-      await api.delete(`/tasks/${taskId}`);
+      return api.put(`/tasks/${taskId}`, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', projectSlug] });
       queryClient.invalidateQueries({ queryKey: ['activities', projectSlug] });
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.error || 'Failed to update task');
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectSlug] });
+    }
+  });
+
+  const deleteTask = useMutation({
+    mutationFn: async (taskId: number) => api.delete(`/tasks/${taskId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectSlug] });
+      queryClient.invalidateQueries({ queryKey: ['activities', projectSlug] });
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.error || 'Failed to delete task');
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectSlug] });
     }
   });
 

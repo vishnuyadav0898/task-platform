@@ -15,6 +15,7 @@ class Task extends Model {
   public assignedToUserId!: number | null;
   public createdById!: number;
   public reminderSent!: boolean;
+  public overdueNotified!: boolean;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -81,6 +82,11 @@ Task.init(
       },
     },
     reminderSent: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    overdueNotified: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,

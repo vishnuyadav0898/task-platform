@@ -28,12 +28,18 @@ export const notificationWorker = new Worker(
       userId,
       message,
       isRead: false,
+      type: type === 'WARNING' ? 'WARNING' : 'INFO',
     });
     
     if (type === 'REMINDER') {
       const task = await Task.findByPk(taskId);
       if (task) {
         await task.update({ reminderSent: true });
+      }
+    } else if (type === 'WARNING') {
+      const task = await Task.findByPk(taskId);
+      if (task) {
+        await task.update({ overdueNotified: true });
       }
     }
   },
@@ -46,11 +52,12 @@ export const schedulerQueue = new Queue('scheduler-queue', { connection: connect
 export const schedulerWorker = new Worker(
   'scheduler-queue',
   async () => {
-    console.log('[Scheduler] Checking for upcoming tasks...');
+    console.log('[Scheduler] Checking for upcoming and overdue tasks...');
     
     const now = new Date();
     const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     
+    // 1. Upcoming Tasks
     const upcomingTasks = await Task.findAll({
       where: {
         dueDate: {
@@ -73,11 +80,44 @@ export const schedulerWorker = new Worker(
             type: 'REMINDER',
             message: `Reminder: Task "${task.title}" is due soon!`,
           },
-          {
-            attempts: 3,
-            backoff: { type: 'exponential', delay: 1000 }
-          }
+          { attempts: 3 }
         );
+      }
+    }
+    
+    // 2. Overdue Tasks
+    const overdueTasks = await Task.findAll({
+      where: {
+        dueDate: {
+          [Op.lt]: now,
+        },
+        overdueNotified: false,
+        status: {
+          [Op.notIn]: ['DONE', 'ARCHIVED']
+        }
+      },
+      include: ['project'] // we need project to find workspaceId
+    });
+
+    for (const task of overdueTasks) {
+      const project = (task as any).project;
+      if (project) {
+        // Find all workspace members
+        const { WorkspaceMember } = require('../models');
+        const members = await WorkspaceMember.findAll({ where: { workspaceId: project.workspaceId, status: 'ACCEPTED' } });
+        
+        for (const member of members) {
+          await notificationQueue.add(
+            'task-overdue',
+            {
+              taskId: task.id,
+              userId: member.userId,
+              type: 'WARNING',
+              message: `OVERDUE: The task "${task.title}" was due on ${task.dueDate?.toLocaleDateString()} and is not yet complete!`,
+            },
+            { attempts: 3 }
+          );
+        }
       }
     }
   },
