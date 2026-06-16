@@ -124,16 +124,16 @@ export const schedulerWorker = new Worker(
   { connection: connection as any }
 );
 
-// Add the repeatable job (runs every 1 minute for testing)
+// Add the repeatable job (runs every 15 minutes)
 export const initScheduler = async () => {
   await schedulerQueue.add(
     'check-due-dates',
     {},
     {
       repeat: {
-        pattern: '* * * * *',
+        pattern: '*/15 * * * *',
       },
     }
   );
-  console.log('Scheduler initialized with 1-minute cron.');
+  console.log('Scheduler initialized with 15-minute cron.');
 };
