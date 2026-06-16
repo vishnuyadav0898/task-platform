@@ -33,8 +33,8 @@ export const getWorkspaces = async (req: AuthRequest, res: Response) => {
     const workspaces = await Workspace.findAndCountAll({
       include: [{
         model: User,
-        as: 'Users',
-        through: { attributes: [] },
+        attributes: [], // don't return full user object
+        through: { where: { status: 'ACCEPTED' } }, // Only show accepted workspaces
         where: { id: req.user!.id }
       }],
       limit: Number(limit),

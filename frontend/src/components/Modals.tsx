@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import api from '../api/client';
 import { X } from 'lucide-react';
 
@@ -212,7 +212,25 @@ interface TaskDetailModalProps extends ModalProps {
 
 export function TaskDetailModal({ isOpen, onClose, task }: TaskDetailModalProps) {
   const queryClient = useQueryClient();
+  const [commentContent, setCommentContent] = useState('');
   
+  const { data: comments = [] } = useQuery({
+    queryKey: ['comments', task?.id],
+    queryFn: async () => {
+      const { data } = await api.get(`/tasks/${task.id}/comments`);
+      return data.data || data;
+    },
+    enabled: !!task?.id && isOpen
+  });
+
+  const addComment = useMutation({
+    mutationFn: async () => api.post(`/tasks/${task.id}/comments`, { content: commentContent }),
+    onSuccess: () => {
+      setCommentContent('');
+      queryClient.invalidateQueries({ queryKey: ['comments', task.id] });
+    }
+  });
+
   const updateStatus = useMutation({
     mutationFn: async (status: string) => api.put(`/tasks/${task.id}`, { status }),
     onSuccess: () => {
@@ -290,8 +308,47 @@ export function TaskDetailModal({ isOpen, onClose, task }: TaskDetailModalProps)
                 {new Date(task.createdAt).toLocaleDateString()}
               </span>
             </div>
+            </div>
           </div>
-        </div>
+          
+          {/* Comments Section */}
+          <div className="mt-6 border-t border-slate-100 pt-6">
+            <h3 className="text-sm font-bold text-slate-700 mb-4">Discussion</h3>
+            
+            <div className="space-y-4 mb-4 max-h-48 overflow-y-auto custom-scrollbar pr-2">
+              {comments.length === 0 ? (
+                <p className="text-xs italic text-slate-400">No comments yet. Start the conversation!</p>
+              ) : (
+                comments.map((comment: any) => (
+                  <div key={comment.id} className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-bold text-xs text-slate-700">{comment.author?.name || 'Unknown'}</span>
+                      <span className="text-[10px] text-slate-400">{new Date(comment.createdAt).toLocaleString()}</span>
+                    </div>
+                    <p className="text-sm text-slate-600">{comment.content}</p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                value={commentContent}
+                onChange={(e) => setCommentContent(e.target.value)}
+                placeholder="Write a comment..."
+                className="flex-1 bg-slate-50 border border-slate-200 text-sm px-4 py-2 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                onKeyDown={(e) => { if (e.key === 'Enter' && commentContent.trim()) addComment.mutate(); }}
+              />
+              <button 
+                onClick={() => addComment.mutate()}
+                disabled={!commentContent.trim() || addComment.isPending}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-bold shadow-md hover:shadow-indigo-500/25 transition-all disabled:opacity-50 text-sm"
+              >
+                Send
+              </button>
+            </div>
+          </div>
         
         <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
           <button onClick={onClose} className="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg shadow-md transition-colors">Close</button>

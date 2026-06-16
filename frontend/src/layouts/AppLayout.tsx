@@ -21,10 +21,11 @@ export default function AppLayout() {
     queryKey: ['workspaces'],
     queryFn: async () => {
       const { data } = await api.get('/workspaces');
-      if (data.length > 0 && !workspaceSlug && location.pathname === '/') {
-        navigate(`/${data[0].slug}`);
+      const normalizedData = data.data || data;
+      if (normalizedData.length > 0 && !workspaceSlug && location.pathname === '/') {
+        navigate(`/${normalizedData[0].slug}`);
       }
-      return data;
+      return normalizedData;
     }
   });
 
@@ -33,7 +34,7 @@ export default function AppLayout() {
     queryFn: async () => {
       if (!workspaceSlug) return [];
       const { data } = await api.get(`/workspaces/${workspaceSlug}/projects`);
-      return data;
+      return data.data || data;
     },
     enabled: !!workspaceSlug
   });

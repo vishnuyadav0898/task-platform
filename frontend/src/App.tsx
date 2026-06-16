@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Login from './views/Login';
@@ -9,7 +10,7 @@ import ProjectBoard from './views/ProjectBoard';
 const queryClient = new QueryClient();
 
 // Protected Route wrapper
-const PrivateRoute = ({ children }: { children: JSX.Element }) => {
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('accessToken');
   return token ? children : <Navigate to="/login" />;
 };

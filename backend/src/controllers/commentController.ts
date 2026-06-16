@@ -24,7 +24,7 @@ export const addComment = async (req: AuthRequest, res: Response) => {
     });
 
     const populatedComment = await Comment.findByPk(comment.id, {
-      include: [{ model: User, as: 'author', attributes: ['id', 'username', 'email'] }]
+      include: [{ model: User, as: 'author', attributes: ['id', 'name', 'email'] }]
     });
 
     // Notifications
@@ -66,7 +66,7 @@ export const getComments = async (req: AuthRequest, res: Response) => {
 
     const comments = await Comment.findAndCountAll({
       where: { taskId },
-      include: [{ model: User, as: 'author', attributes: ['id', 'username', 'email'] }],
+      include: [{ model: User, as: 'author', attributes: ['id', 'name', 'email'] }],
       order: [['createdAt', 'ASC']],
       limit: Number(limit),
       offset

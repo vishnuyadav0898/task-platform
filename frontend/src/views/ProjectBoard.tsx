@@ -18,7 +18,7 @@ const COLUMNS = [
 export default function ProjectBoard() {
   const { workspaceSlug, projectSlug } = useParams();
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [, setSearchParams] = useSearchParams();
 
   const [isTaskModalOpen, setTaskModalOpen] = useState(false);
   const [activeParentId, setActiveParentId] = useState<number | null>(null);
@@ -202,7 +202,15 @@ export default function ProjectBoard() {
                                 }`}
                               >
                                 <div className="flex justify-between items-start mb-1">
-                                  <h4 className="font-bold text-slate-800 leading-tight">{task.title}</h4>
+                                  <h4 
+                                    onClick={() => {
+                                      setSelectedTask(task);
+                                      setSearchParams({ task: task.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') });
+                                    }}
+                                    className="font-bold text-slate-800 leading-tight cursor-pointer hover:text-indigo-600 transition-colors"
+                                  >
+                                    {task.title}
+                                  </h4>
                                   <button 
                                     onClick={() => { if(confirm('Delete this task?')) deleteTask.mutate(task.id); }}
                                     className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete Task">
@@ -211,7 +219,15 @@ export default function ProjectBoard() {
                                 </div>
                                 
                                 {task.description && (
-                                  <p className="text-xs text-slate-500 line-clamp-2 mb-3">{task.description}</p>
+                                  <p 
+                                    onClick={() => {
+                                      setSelectedTask(task);
+                                      setSearchParams({ task: task.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') });
+                                    }}
+                                    className="text-xs text-slate-500 line-clamp-2 mb-3 cursor-pointer hover:text-slate-700 transition-colors"
+                                  >
+                                    {task.description}
+                                  </p>
                                 )}
 
                                 {/* Subtasks Section */}

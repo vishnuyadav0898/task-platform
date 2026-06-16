@@ -13,7 +13,7 @@ export default function WorkspaceHome() {
     queryKey: ['workspaces'],
     queryFn: async () => {
       const { data } = await api.get('/workspaces');
-      return data;
+      return data.data || data;
     }
   });
 
@@ -22,7 +22,7 @@ export default function WorkspaceHome() {
     queryFn: async () => {
       if (!parsedWorkspaceId) return [];
       const { data } = await api.get(`/workspaces/${parsedWorkspaceId}/projects`);
-      return data;
+      return data.data || data;
     },
     enabled: !!parsedWorkspaceId
   });
